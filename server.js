@@ -7,6 +7,8 @@ const {hostCancelingRouter} =  require("./routers/hostCancelingRouter");
 const {newHostRouter} =  require("./routers/newHostRouter");
 const {problemsRouter} =  require("./routers/problemsRouter");
 const {getVersionRouter} =  require("./routers/getVersionRouter");
+const {loginRouter} =  require("./routers/loginRouter");
+
 
 const app = express();
 app.use(express.json());
@@ -20,7 +22,9 @@ app.get("/", (req, res) => {
 
 // app.get('/gila/version')
 
-app.use('/gila/version', getVersionRouter)
+app.use('/gila/version', getVersionRouter);
+
+app.use('/gila/login', loginRouter);
 
 app.use('/gila/host-canceling', hostCancelingRouter);
 
