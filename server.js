@@ -6,9 +6,9 @@ const GoogleAssistant = require('google-assistant');
 const {hostCancelingRouter} =  require("./routers/hostCancelingRouter");
 const {newHostRouter} =  require("./routers/newHostRouter");
 const {problemsRouter} =  require("./routers/problemsRouter");
-const {getVersionRouter} =  require("./routers/getVersionRouter");
+const {getGroupRouter} =  require("./routers/getGroupRouter");
 const {loginRouter} =  require("./routers/loginRouter");
-
+const {authRouter} =  require("./routers/authRouter");
 
 const app = express();
 app.use(express.json());
@@ -22,9 +22,9 @@ app.get("/", (req, res) => {
 
 // app.get('/gila/version')
 
-app.use('/gila/version', getVersionRouter);
+app.use('/gila/groupId', getGroupRouter);
 
-app.use('/gila/login', loginRouter);
+app.use('/gila/login',loginRouter);
 
 app.use('/gila/host-canceling', hostCancelingRouter);
 
@@ -102,7 +102,6 @@ const startConversation = (conversation) => {
       // if the screen.isOn flag was set to true, you'll get the format and data of the output
     })
     .on('ended', (error, continueConversation) => {
-      console.log('contunue conversion'+continueConversation);
       // once the conversation is ended, see if we need to follow up
       if (error) console.log('Conversation Ended Error:', error);
       else if (continueConversation) assistant.start();

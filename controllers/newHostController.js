@@ -1,6 +1,12 @@
+const auth = require("../middlewares/auth");
+
 exports.newHostController = {
     createHost(req, res) {
-        console.log('create Host');
-        res.json({message:"create host"});
+        try{
+            //const resposne= await Promise.all([])
+            res.json({message:"create Host"});
+        } catch(err){
+            res.status(404).json({message:"Bad request"});
+        }
     }
 }

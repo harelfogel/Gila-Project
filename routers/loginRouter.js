@@ -3,4 +3,4 @@ const { loginController } = require('../controllers/loginController');
 const loginRouter = new Router();
 module.exports = { loginRouter};
 
-loginRouter.get('/' ,loginController.login);
+loginRouter.post('/' ,loginController.login);
