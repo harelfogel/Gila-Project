@@ -8,7 +8,7 @@ const {newHostRouter} =  require("./routers/newHostRouter");
 const {problemsRouter} =  require("./routers/problemsRouter");
 const {getGroupRouter} =  require("./routers/getGroupRouter");
 const {loginRouter} =  require("./routers/loginRouter");
-const {authRouter} =  require("./routers/authRouter");
+
 
 const app = express();
 app.use(express.json());
@@ -20,11 +20,9 @@ app.get("/", (req, res) => {
 
 // All- app routes:
 
-// app.get('/gila/version')
+app.use('/gila/login',loginRouter);
 
 app.use('/gila/groupId', getGroupRouter);
-
-app.use('/gila/login',loginRouter);
 
 app.use('/gila/host-canceling', hostCancelingRouter);
 
