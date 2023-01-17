@@ -34,13 +34,12 @@ exports.hostController = {
             auth: auth,
             id: 1,
           };
-          res.send("create")
-    
-        //   const response = await axios.post(
-        //     `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
-        //     createHostPayload
-        //   );
-        //   res.json({ message: "Creating Host have done succecsully." });
+          res.send("create");
+          const response = await axios.post(
+            `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+            createHostPayload
+          );
+          res.json({ message: "Creating Host have done succecsully." });
         } 
         
         catch (err) {

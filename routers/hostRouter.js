@@ -4,7 +4,7 @@ const hostRouter = new Router();
 const auth= require("../middlewares/auth");
 module.exports = { hostRouter};
 
-hostRouter.post('/' ,hostController.createHost);
-hostRouter.delete('/' ,hostController.deleteHost);
-hostRouter.get('/' ,hostController.getAllProblems);
+hostRouter.post('/' ,auth,hostController.createHost);
+hostRouter.delete('/' ,auth,hostController.deleteHost);
+hostRouter.get('/' ,auth,hostController.getAllProblems);
 

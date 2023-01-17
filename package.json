@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@assistant/conversation": "^3.8.1",
     "actions-on-google": "^3.0.0",
     "axios": "^1.2.2",
     "dotenv": "^16.0.3",

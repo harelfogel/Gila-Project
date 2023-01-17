@@ -5,9 +5,50 @@ const path = require('path');
 const GoogleAssistant = require('google-assistant');
 const {loginRouter} =  require("./routers/loginRouter");
 const {hostRouter} =  require("./routers/hostRouter");
+const {replaceSpacesWithUnderScore}= require("./utils/utils");
+// Import the service function and various response classes
+
+console.log(replaceSpacesWithUnderScore('Hey goggog wite me somthing'));
+// const {
+//   dialogflow,
+//   actionssdk,
+//   Image,
+//   Table,
+//   Carousel,
+// } = require('actions-on-google');
+
+// const {
+//   conversation,
+//   Image,
+// } = require('@assistant/conversation')
 
 
 const app = express();
+// const dialogFlowApp = dialogflow();
+// // Create an app instance
+// const convApp = conversation();
+
+// convApp.handle('<YOUR HANDLER NAME>', conv => {
+//   conv.add('Hi, how is it going?')
+//   conv.add(new Image({
+//     url: 'https://developers.google.com/web/fundamentals/accessibility/semantics-builtin/imgs/160204193356-01-cat-500.jpg',
+//     alt: 'A cat',
+//   }))
+// })
+
+// dialogFlowApp.intent('Default Welcome Intent', (conv) => {
+//   conv.ask('How are you?');
+// });
+
+// dialogFlowApp.intent('bye', (conv) => {
+//   conv.close('See you later!');
+// });
+
+// dialogFlowApp.catch((conv, error) => {
+//   console.error(error);
+//   conv.ask('I encountered a glitch. Can you say that again?');
+// });
+
 app.use(express.json());
 
 // simple route
@@ -24,6 +65,7 @@ app.use('/host', hostRouter)
 app.use((req, res) => {
     res.status(400).send('Something is broken!');
   });
+
 
 
 
@@ -58,57 +100,6 @@ const config = {
   },
 };
 
-const assistant = new GoogleAssistant(config.auth);
 
-// starts a new conversation with the assistant
-const startConversation = (conversation) => {
-  console.log('converstion is: '+conversation);
-  // setup the conversation and send data to it
-  // for a full example, see `examples/mic-speaker.js`
-
-  conversation
-    .on('audio-data', (data) => {
-      // do stuff with the audio data from the server
-      // usually send it to some audio output / file
-    })
-    .on('end-of-utterance', () => {
-      // do stuff when done speaking to the assistant
-      // usually just stop your audio input
-    })
-    .on('transcription', (data) => {
-      // do stuff with the words you are saying to the assistant
-    })
-    .on('response', (text) => {
-      // do stuff with the text that the assistant said back
-    })
-    .on('volume-percent', (percent) => {
-      // do stuff with a volume percent change (range from 1-100)
-    })
-    .on('device-action', (action) => {
-      // if you've set this device up to handle actions, you'll get that here
-    })
-    .on('screen-data', (screen) => {
-      // if the screen.isOn flag was set to true, you'll get the format and data of the output
-    })
-    .on('ended', (error, continueConversation) => {
-      // once the conversation is ended, see if we need to follow up
-      if (error) console.log('Conversation Ended Error:', error);
-      else if (continueConversation) assistant.start();
-      else console.log('Conversation Complete');
-    })
-    .on('data', (data) => {
-      // raw data from the google assistant conversation
-      // useful for debugging or if something is not covered above
-    })
-    .on('error', (error) => {
-      // handle error messages
-    })
-};
-
-// will start a conversation and wait for audio data
-// as soon as it's ready
-assistant
-  .on('ready', () => assistant.start(config.conversation))
-  .on('started', startConversation);
 
   app.listen(port, () => console.log((`Gila server is running on port ${port}`)));
