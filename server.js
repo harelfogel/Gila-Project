@@ -3,11 +3,8 @@ require('dotenv').config();
 const port = process.env.PORT || 3200;
 const path = require('path');
 const GoogleAssistant = require('google-assistant');
-const {hostCancelingRouter} =  require("./routers/hostCancelingRouter");
-const {newHostRouter} =  require("./routers/newHostRouter");
-const {problemsRouter} =  require("./routers/problemsRouter");
-const {getGroupRouter} =  require("./routers/getGroupRouter");
 const {loginRouter} =  require("./routers/loginRouter");
+const {hostRouter} =  require("./routers/hostRouter");
 
 
 const app = express();
@@ -22,13 +19,7 @@ app.get("/", (req, res) => {
 
 app.use('/gila/login',loginRouter);
 
-app.use('/gila/groupId', getGroupRouter);
-
-app.use('/gila/host-canceling', hostCancelingRouter);
-
-app.use('/gila/new-host', newHostRouter);
-
-app.use('/gila/problems-list', problemsRouter);
+app.use('/host', hostRouter)
 
 app.use((req, res) => {
     res.status(400).send('Something is broken!');
