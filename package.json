@@ -19,6 +19,7 @@
     "google-assistant": "^0.7.0",
     "node-zabbix-sender": "^1.1.0",
     "nodejs-assistant": "^0.8.0",
-    "nodemon": "^2.0.20"
+    "nodemon": "^2.0.20",
+    "zabbix-rpc": "^1.2.4"
   }
 }

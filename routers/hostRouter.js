@@ -7,4 +7,3 @@ module.exports = { hostRouter};
 hostRouter.post('/' ,auth,hostController.createHost);
 hostRouter.delete('/' ,auth,hostController.deleteHost);
 hostRouter.get('/' ,auth,hostController.getAllProblems);
-

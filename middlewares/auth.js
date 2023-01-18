@@ -1,7 +1,6 @@
 const axios = require("axios");
 module.exports = async (req, res, next) => {
   try {
-    console.log('im in auth.js try to get token');
     const payload = {
       jsonrpc: "2.0",
       method: "user.login",
@@ -17,9 +16,9 @@ module.exports = async (req, res, next) => {
       payload
     );
     const auth = response.data.result;
-    if(auth){
-      req.data=auth;
-    } else{
+    if (auth) {
+      req.data = auth;
+    } else {
       res.status(401).json({ message: `Bad Token.Cannot login to Zabbix.` });
     }
     next();
