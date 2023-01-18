@@ -3,12 +3,16 @@ const axios = require("axios");
 exports.hostController = {
   async createHost(req, res) {
     try {
-      const auth = req.data;
+
+      const middlewarepayload = req.data;
+
       const createHostPayload = {
         jsonrpc: "2.0",
         method: "host.create",
         params: {
-          host: "Linux server-TEST-3",
+
+          host: middlewarepayload.hostName,
+
           interfaces: [
             {
               type: 1,
@@ -16,14 +20,11 @@ exports.hostController = {
               useip: 1,
               ip: `${process.env.ZABBIX_SERVER_IP}`,
               dns: "",
-              port: "10050",
+
+              port: middlewarepayload.port,
             },
           ],
-          groups: [
-            {
-              groupid: "6",
-            },
-          ],
+          groups: middlewarepayload.groups,
           tags: [
             {
               tag: "Host name",
@@ -31,7 +32,8 @@ exports.hostController = {
             },
           ],
         },
-        auth: auth,
+
+        auth: middlewarepayload.authToken,
         id: 1,
       };
 
@@ -40,25 +42,55 @@ exports.hostController = {
         createHostPayload
       );
       res.json({ message: "Creating Host have done succecsully." });
-    }
 
-    catch (err) {
-      res.status(404).json({ message: "Bad request" });
+    } catch (err) {
+      res.status(404).json({ message: `Cant create Host:  ${err}` });
+      console.log(err);
     }
   },
   async deleteHost(req, res) {
-    console.log("Delete")
-    res.send("delete host")
+    try {
+      const middlewarePayload = req.data;
+      const deletePayload = {
+        jsonrpc: "2.0",
+        method: "host.delete",
+        params: middlewarePayload.params,
+        auth: middlewarePayload.authToken,
+        id: 1,
+      };
+      const response = await axios.post(
+        `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+        deletePayload
+      );
+      res.json({
+        message: `Host ${middlewarePayload.params} has been deleted`,
+      });
+    } catch (error) {
+      console.log(err);
+    }
   },
   async getAllProblems(req, res) {
     try {
-      const auth = req.data;
-      console.log("get all problems");
-      console.log(req.data);
-      res.send("problems")
+      const middlewareProblemsPayload = req.data;
+      const problemsPayload=
+        {
+        jsonrpc: "2.0",
+        method: "problem.get",
+        params: middlewareProblemsPayload.params,
+        auth: middlewareProblemsPayload.authToken,
+        id: 1
+        }
+        const response  = await axios.post(
+          `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+          problemsPayload
+        );
+        res.json({
+          message: `${response.data.result}`
+        });
       //   res.json({ message: `${auth}` });
     } catch (err) {
-      res.status(404).json({ message: "Cannot get all problems" });
+      res.status(404).json({ message: `Cannot get all problems: ${err}` });
     }
   },
-}
+};
+

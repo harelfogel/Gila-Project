@@ -1,5 +1,7 @@
 const axios = require("axios");
-const { response } = require("express");
+const Zabbix = require('zabbix-rpc');
+
+const z = new Zabbix(`${process.env.ZABBIX_SERVER_URL}/zabbix`);
 
 exports.loginController = {
   async login(req, res) {
@@ -8,8 +10,8 @@ exports.loginController = {
         jsonrpc: "2.0",
         method: "user.login",
         params: {
-          user: "Admin",
-          password: "zabbix",
+          user: 'Admin',
+          password: 'zabbix',
         },
         id: 2,
         auth: null,
@@ -24,4 +26,5 @@ exports.loginController = {
       res.status(401).json({ mesaage: `Bad Token. Cannot login to Zabbix.` });
     }
   },
+
 };
