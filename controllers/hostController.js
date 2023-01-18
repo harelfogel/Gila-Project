@@ -3,12 +3,16 @@ const axios = require("axios");
 exports.hostController = {
   async createHost(req, res) {
     try {
+
       const middlewarepayload = req.data;
+
       const createHostPayload = {
         jsonrpc: "2.0",
         method: "host.create",
         params: {
+
           host: middlewarepayload.hostName,
+
           interfaces: [
             {
               type: 1,
@@ -16,6 +20,7 @@ exports.hostController = {
               useip: 1,
               ip: `${process.env.ZABBIX_SERVER_IP}`,
               dns: "",
+
               port: middlewarepayload.port,
             },
           ],
@@ -27,14 +32,17 @@ exports.hostController = {
             },
           ],
         },
+
         auth: middlewarepayload.authToken,
         id: 1,
       };
+
       const response = await axios.post(
         `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
         createHostPayload
       );
       res.json({ message: "Creating Host have done succecsully." });
+
     } catch (err) {
       res.status(404).json({ message: `Cant create Host:  ${err}` });
       console.log(err);
@@ -85,3 +93,4 @@ exports.hostController = {
     }
   },
 };
+
