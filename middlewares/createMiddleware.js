@@ -17,7 +17,17 @@ module.exports = async (req, res, next) => {
     );
     const auth = response.data.result;
     if (auth) {
-      req.data = auth;
+        const createHostParams={
+            authToken:auth,
+            port:"10050",
+            hostName:"Test-TBD-4",
+            groups: [
+                {
+                  groupid: "2",
+                },
+              ]
+        }
+      req.data =createHostParams;
     } else {
       res.status(401).json({ message: `Bad Token.Cannot login to Zabbix.` });
     }
