@@ -8,16 +8,6 @@ const {hostRouter} =  require("./routers/hostRouter");
 const {replaceSpacesWithUnderScore,stringToArray,getGroupIdByName, getHostIdByName}= require("./utils/utils");
 
 
-const res=async ()=>{
-  const resutl= await getHostIdByName('deb882b789fe18f1a9575af7a986a0f4',[
-    "Zabbix servers",
-    "Linux server-TEST-3",
-  ],"Linux server-TEST-3")
-  console.log(resutl)
-}
-res();
-
-
 const app = express();
 app.use(express.json());
 

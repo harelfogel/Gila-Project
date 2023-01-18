@@ -66,6 +66,7 @@ exports.hostController = {
         message: `Host ${middlewarePayload.params} has been deleted`,
       });
     } catch (error) {
+      res.status(404).json({ message: `Cant delete Host:  ${err}` });
       console.log(err);
     }
   },
