@@ -1,7 +1,6 @@
 const express = require("express");
 require('dotenv').config();
 const port = process.env.PORT || 3200;
-const path = require('path');
 const GoogleAssistant = require('google-assistant');
 const {loginRouter} =  require("./routers/loginRouter");
 const {hostRouter} =  require("./routers/hostRouter");

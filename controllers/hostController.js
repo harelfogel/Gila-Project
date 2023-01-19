@@ -5,6 +5,8 @@ exports.hostController = {
     try {
 
       const middlewarepayload = req.data;
+      console.log('inm in host conroller')
+      console.log(middlewarepayload);
 
       const createHostPayload = {
         jsonrpc: "2.0",
