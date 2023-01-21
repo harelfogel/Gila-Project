@@ -4,7 +4,7 @@ const port = process.env.PORT || 3200;
 const GoogleAssistant = require('google-assistant');
 const {loginRouter} =  require("./routers/loginRouter");
 const {hostRouter} =  require("./routers/hostRouter");
-const {replaceSpacesWithUnderScore,stringToArray,getGroupIdByName, getHostIdByName}= require("./utils/utils");
+const {replaceSpacesWithUnderScore,stringToArray,getGroupIdByName, getHostIdByName,getAllHosts,isHostExists}= require("./utils/utils");
 
 
 const app = express();
@@ -18,6 +18,10 @@ app.get("/", (req, res) => {
 // All- app routes:
 app.use('/gila/login',loginRouter);
 app.use('/host', hostRouter);
+
+
+
+
 
 app.use((req, res) => {
     res.status(400).send('Something is broken!');

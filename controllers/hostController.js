@@ -1,13 +1,14 @@
 const axios = require("axios");
+const { isHostExists } = require("../utils/utils");
 
 exports.hostController = {
   async createHost(req, res) {
     try {
-
       const middlewarepayload = req.data;
-      console.log('inm in host conroller')
-      console.log(middlewarepayload);
-
+      if((await isHostExists(middlewarepayload.auth,middlewarepayload.hostName)) == true){
+        throw `Host is already exist.`;
+      }
+      console.log({middlewarepayload})
       const createHostPayload = {
         jsonrpc: "2.0",
         method: "host.create",
@@ -35,15 +36,38 @@ exports.hostController = {
           ],
         },
 
-        auth: middlewarepayload.authToken,
+        auth: middlewarepayload.auth,
         id: 1,
       };
+      console.log({createHostPayload})
 
       const response = await axios.post(
         `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
         createHostPayload
       );
-      res.json({ message: "Creating Host have done succecsully." });
+      res.json({
+        expectUserResponse: true,
+        expectedInputs: [
+          {
+            possibleIntents: [
+              {
+                intent: "actions.intent.TEXT"
+              }
+            ],
+            inputPrompt: {
+              richInitialPrompt: {
+                items: [
+                  {
+                    simpleResponse: {
+                      textToSpeech: `The user ${middlewarepayload.hostName} has been created successfully`
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ] 
+      }); 
 
     } catch (err) {
       res.status(404).json({ message: `Cant create Host:  ${err}` });
@@ -57,7 +81,7 @@ exports.hostController = {
         jsonrpc: "2.0",
         method: "host.delete",
         params: middlewarePayload.params,
-        auth: middlewarePayload.authToken,
+        auth: middlewarePayload.auth,
         id: 1,
       };
       const response = await axios.post(
@@ -80,7 +104,7 @@ exports.hostController = {
         jsonrpc: "2.0",
         method: "problem.get",
         params: middlewareProblemsPayload.params,
-        auth: middlewareProblemsPayload.authToken,
+        auth: middlewareProblemsPayload.auth,
         id: 1
         }
         const response  = await axios.post(
