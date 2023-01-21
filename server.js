@@ -6,6 +6,7 @@ const bodyParser = require('body-parser')
 
 const https = require('https');
 const fs = require('fs');
+const { hostController } = require("./controllers/hostController");
 const CERT_PATH = '/etc/letsencrypt/live/gila.shenkar.cloud/fullchain.pem';
 const KEY_PATH = '/etc/letsencrypt/live/gila.shenkar.cloud/privkey.pem';
 
@@ -13,6 +14,8 @@ const app = conversation();
 const expressApp = express().use(bodyParser.json());
 
 const resText = "These are not the droids you are looking for."
+
+
 
 expressApp.use((req, res, next) => {
   console.log(`Request URL: ${req.url}`);
@@ -22,6 +25,7 @@ expressApp.use((req, res, next) => {
 
 app.handle('createHost', conv => {
   console.log('*********createHost******');
+  hostController.createNewHost({params: conv.session.params})
   conv.add(resText);
 });
 

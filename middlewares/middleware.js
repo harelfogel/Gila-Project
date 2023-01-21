@@ -18,11 +18,7 @@ module.exports = async (req, res, next) => {
       id: 2,
       auth: null,
     };
-    const response = await axios.post(
-      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
-      payload
-    );
-    const auth = response.data.result;
+    
     if (auth && req.baseUrl === "/host" && req.method === "POST") {
       // CREATE new host
       responseParams = getCreateHostParams({req});

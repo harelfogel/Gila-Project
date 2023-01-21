@@ -1,7 +1,51 @@
 const axios = require("axios");
-const { isHostExists,getGoogleResponse } = require("../utils/utils");
+const { isHostExists,getGoogleResponse, getAuth, stringToArray, getGroupIdByName } = require("../utils/utils");
+
+
 
 exports.hostController = {
+
+  async createNewHost({params}) {
+    console.log({params})
+    try{
+      const auth = await getAuth();
+      const hostName = params.host_name;
+      const groupList = stringToArray(params.host_groups)
+      const tags = groupList.map(item => {
+        return {
+          tag: "Host Name",
+          value: item
+        }
+      })
+      const groupsIds = []
+      groupList.map(item => {
+        groupsIds.push({groupid: getGroupIdByName({
+          auth,
+          namesList: groupList,
+          desiredName: item
+        })})
+      })
+      console.log({params})
+
+      const payload = {
+        jsonrpc: "2.0",
+        method: "host.create",
+        params:{
+          host: hostName,
+          groups: groupsIds,
+          tags
+        }
+      }
+    }
+    catch(err){
+      console.log(err)
+    }
+  },
+
+
+
+
+
   async createHost(req, res) {
     try {
       const middlewarepayload = req.data;

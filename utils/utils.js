@@ -27,11 +27,11 @@ const stringToArray = (str) => {
   }
 };
 
-const getGroupIdByName = async (
+const getGroupIdByName = async ({
   auth,
   namesList = ["Zabbix servers", "Linux servers"],
   desiredName
-) => {
+}) => {
   try {
     let retGroupId = "";
     let isGroupIdFound = false;
@@ -206,6 +206,18 @@ const getGoogleResponse= (hostName, resMethod)=>{
   }
 }
 
+const getAuth = async () => {
+  try{
+    const response = await axios.post(
+      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+      payload
+      );
+      return response.data.result;
+    }
+    catch(err){
+      return `Can't get auth: ${err}`;
+    }
+}
 
 module.exports = {
   replaceSpacesWithUnderScore,
@@ -214,5 +226,6 @@ module.exports = {
   getHostIdByName,
   getAllHosts,
   isHostExists,
-  getGoogleResponse
+  getGoogleResponse,
+  getAuth
 };
