@@ -1,27 +1,31 @@
 const express = require("express");
 require('dotenv').config();
-const port = process.env.PORT || 3200;
-const GoogleAssistant = require('google-assistant');
-const {loginRouter} =  require("./routers/loginRouter");
-const {hostRouter} =  require("./routers/hostRouter");
-const {replaceSpacesWithUnderScore,stringToArray,getGroupIdByName, getHostIdByName,getAllHosts,isHostExists}= require("./utils/utils");
+const { conversation } = require('@assistant/conversation')
+const port = 443;
+
+const https = require('https');
+const fs = require('fs');
+const CERT_PATH = '/etc/letsencrypt/live/gila.shenkar.cloud/fullchain.pem';
+const KEY_PATH = '/etc/letsencrypt/live/gila.shenkar.cloud/privkey.pem';
+
+const app = conversation();
+
+const expressApp = express().use(bodyParser.json());
+
+expressApp.use((req, res, next) => {
+  console.log(`Request URL: ${req.url}`);
+  console.log(`Request Body: ${JSON.stringify(req.body)}`);
+  next();
+});
+
+expressApp.post('/fulfillment', app);
 
 
-const app = express();
-app.use(express.json());
-
-// simple route
-app.get("/", (req, res) => {
-    res.json({ message: "Gila team server." });
-  });
-
-// All- app routes:
-app.use('/gila/login',loginRouter);
-app.use('/host', hostRouter);
-
-
-
-app.use((req, res) => {
-    res.status(400).send('Something is broken!');
-  });
-app.listen(port, () => console.log((`Gila server is running on port ${port}`)));
+https.createServer({
+  key: fs.readFileSync(KEY_PATH),
+  cert: fs.readFileSync(CERT_PATH)
+}, expressApp)
+  .listen(port, () => {
+    console.log(`Gila server is running on port ${port}`)
+  }
+  );
