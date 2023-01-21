@@ -29,47 +29,7 @@ const stringToArray = (str) => {
 
 
 
-const getHostIdByName = async (
-  auth,
-  hostNamesList = ["Zabbix servers", "Linux servers"],
-  desiredName
-) => {
-  try {
-    let retHostId = "";
-    let isHostIdFound = false;
-    if (!auth) {
-      throw "Bad Token";
-    }
-    if (!hostNamesList) {
-      throw "Cannot Find nameList for getting Group Id";
-    }
-    const getHostIdPayload = {
-      jsonrpc: "2.0",
-      method: "host.get",
-      auth: auth,
-      id: 1,
-    };
-    const response = await axios.post(
-      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
-      getHostIdPayload
-    );
-    const NamesList = response.data.result;
-    console.log(NamesList);
-    NamesList.forEach((element) => {
-      if (element.name === desiredName) {
-        isHostIdFound = true;
-        retHostId = element.hostid;
-      }
-    });
-    if (!isHostIdFound) {
-      throw "Cannot find host id for host";
-    }
-    return retHostId;
-  } catch (err) {
-    console.log(err);
-    return err;
-  }
-};
+
 
 const getAllHosts = async (auth) => {
   try {
@@ -179,6 +139,106 @@ const getAuth = async () => {
     return `Can't get auth: ${err}`;
   }
 }
+
+// const getHostIdByName = async (
+//   auth,
+//   hostNamesList = ["Zabbix servers", "Linux servers"],
+//   desiredName
+// ) => {
+//   try {
+//     let retHostId = "";
+//     let isHostIdFound = false;
+//     if (!auth) {
+//       throw "Bad Token";
+//     }
+//     if (!hostNamesList) {
+//       throw "Cannot Find nameList for getting Group Id";
+//     }
+//     const getHostIdPayload = {
+//       jsonrpc: "2.0",
+//       method: "host.get",
+//       auth: auth,
+//       id: 1,
+//     };
+//     const response = await axios.post(
+//       `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+//       getHostIdPayload
+//     );
+//     const NamesList = response.data.result;
+//     console.log(NamesList);
+//     NamesList.forEach((element) => {
+//       if (element.name === desiredName) {
+//         isHostIdFound = true;
+//         retHostId = element.hostid;
+//       }
+//     });
+//     if (!isHostIdFound) {
+//       throw "Cannot find host id for host";
+//     }
+//     return retHostId;
+//   } catch (err) {
+//     console.log(err);
+//     return err;
+//   }
+// };
+
+const getHostIdByName = async (
+  auth,
+  hostNamesList
+) => {
+  try {
+    if (!auth) {
+      throw "Bad Token";
+    }
+    if (!hostNamesList) {
+      throw "Cannot Find nameList for getting Group Id";
+    }
+    const getHostIdPayload = {
+      jsonrpc: "2.0",
+      method: "host.get",
+      params: {
+        filter: {
+          host: hostNamesList
+        }
+      },
+      auth,
+      id: 1,
+    };
+    const response = await axios.post(
+      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+      getHostIdPayload
+    );
+
+    console.log({response: response.data})
+
+    
+
+    const hostsIds =  response.data.result.map(item => {
+      return {
+        name: item.name,
+        hostid: item.hostid
+      }
+    })
+
+    
+
+    return hostsIds
+    // const NamesList = response.data.result;
+    // console.log({NamesList});
+    // NamesList.forEach((element) => {
+    //   if (element.name === desiredName) {
+    //     isHostIdFound = true;
+    //     retHostId = element.hostid;
+    //   }
+    // });
+    // if (!isHostIdFound) {
+    //   throw "Cannot find host id for host";
+    // }
+  } catch (err) {
+    console.log(err);
+    return err;
+  }
+};
 
 const getGroupIdByName = async ({auth,namesList}) => {
   try {

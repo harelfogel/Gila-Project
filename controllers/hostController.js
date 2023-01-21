@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { isHostExists,getGoogleResponse, getAuth, stringToArray, getGroupIdByName } = require("../utils/utils");
+const { isHostExists,getGoogleResponse, getAuth, stringToArray, getGroupIdByName, getHostIdByName, getAllHosts } = require("../utils/utils");
 
 
 
@@ -9,23 +9,31 @@ exports.hostController = {
     console.log({params})
     try{
       const auth = await getAuth();
+      console.log({auth})
       const hostName = params.host_name;
       const groupList = stringToArray(params.host_groups)
+      if (await isHostExists(auth, hostName) == true){
+        console.log("CHECK")
+        return {
+          status: false,
+          message: `${hostName} is already exist.`
+        }
+      }
       const tags = groupList.map(item => {
         return {
           tag: "Host Name",
           value: item
         }
       })
-      const groupsIds = []
-      groupList.map(item => {
-        groupsIds.push({groupid: getGroupIdByName({
-          auth,
-          namesList: groupList,
-          desiredName: item
-        })})
-      })
-      console.log({params})
+      console.log({groupList})
+      const groupsIds = await getGroupIdByName({auth, namesList: groupList })
+      if(groupsIds.length !== groupList.length){
+        return {
+          status: false,
+          message: "Group name not found"}
+      }
+
+      console.log({groupsIds})
 
       const payload = {
         jsonrpc: "2.0",
@@ -34,7 +42,19 @@ exports.hostController = {
           host: hostName,
           groups: groupsIds,
           tags
-        }
+        },
+        auth: auth,
+        id: 1
+      }
+
+      const response = await axios.post(
+        `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+        payload
+      );
+      console.log({createHostResponse: response.data.error})
+      return {
+        status: true,
+        message: `${hostName} created successfully.`
       }
     }
     catch(err){
@@ -42,81 +62,43 @@ exports.hostController = {
     }
   },
 
+  
 
 
 
-
-  async createHost(req, res) {
+  async deleteHost({params}) {
     try {
-      const middlewarepayload = req.data;
-      if((await isHostExists(middlewarepayload.auth,middlewarepayload.hostName)) == true){
-        throw `Host is already exist.`;
-      }
-      console.log({middlewarepayload})
-      const createHostPayload = {
-        jsonrpc: "2.0",
-        method: "host.create",
-        params: {
-
-          host: middlewarepayload.hostName,
-
-          interfaces: [
-            {
-              type: 1,
-              main: 1,
-              useip: 1,
-              ip: `${process.env.ZABBIX_SERVER_IP}`,
-              dns: "",
-
-              port: middlewarepayload.port,
-            },
-          ],
-          groups: middlewarepayload.groups,
-          tags: [
-            {
-              tag: "Host name",
-              value: "Linux server",
-            },
-          ],
-        },
-
-        auth: middlewarepayload.auth,
-        id: 1,
-      };
-      console.log({createHostPayload})
-
-      const response = await axios.post(
-        `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
-        createHostPayload
-      );
-      const googleResponse=getGoogleResponse(middlewarepayload.hostName,'create host'); 
-      res.json({googleResponse}); 
-
-    } catch (err) {
-      res.status(404).json({ message: `Cant create Host:  ${err}` });
-      console.log(err);
-    }
-  },
-  async deleteHost(req, res) {
-    try {
-      const middlewarePayload = req.data;
-      const deletePayload = {
+      console.log({params})
+      const hostName = params.host_name;
+      const auth = await getAuth();
+      const allHosts = await getAllHosts(auth);
+      const allIds = await getHostIdByName(auth, allHosts)
+      const hostId = allIds.filter(item => hostName === item.name)
+      console.log({hostId}, [hostId[0].hostid])
+      
+      // const middlewarePayload = req.data;
+      const payload = {
         jsonrpc: "2.0",
         method: "host.delete",
-        params: middlewarePayload.params,
-        auth: middlewarePayload.auth,
-        id: 1,
+        params: [hostId[0].hostid],
+        auth,
+        id: 3,
       };
       const response = await axios.post(
         `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
-        deletePayload
+        payload
       );
-      const googleResponse=getGoogleResponse(middlewarePayload.params.hostName,'delete host');
-      res.json({
-        googleResponse
-      });
+
+      console.log({delete_data: response.data})
+      
+      return {
+        status: true,
+        message: `${hostName} has been deleted`
+      }
+
     } catch (error) {
-      res.status(404).json({ message: `Cant delete Host:  ${err}` });
+      
+      // res.status(404).json({ message: `Cant delete Host:  ${err}` });
       console.log(err);
     }
   },

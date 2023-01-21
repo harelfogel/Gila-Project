@@ -8,7 +8,7 @@ const https = require('https');
 const fs = require('fs');
 const { hostController } = require("./controllers/hostController");
 const { groupController } = require("./controllers/groupsController");
-const { getGroupIdByName, getAuth } = require("./utils/utils");
+const { getGroupIdByName, getAuth, getHostIdByName } = require("./utils/utils");
 const CERT_PATH = '/etc/letsencrypt/live/gila.shenkar.cloud/fullchain.pem';
 const KEY_PATH = '/etc/letsencrypt/live/gila.shenkar.cloud/privkey.pem';
 
@@ -25,15 +25,17 @@ expressApp.use((req, res, next) => {
   next();
 });
 
+
 app.handle('createHost', async conv  => {
   console.log('*********createHost******');
   const response = await hostController.createNewHost({params: conv.session.params})
   conv.add(response.message);
 });
 
-app.handle('deleteHost', conv => {
+app.handle('deleteHost', async conv => {
   console.log('*********deleteHost******');
-  conv.add(resText);
+  const response = await hostController.deleteHost({params: conv.session.params})
+  conv.add(response.message);
 });
 
 app.handle('listHosts', conv => {
