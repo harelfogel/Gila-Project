@@ -74,7 +74,7 @@ const getCreateTemplateParams = (
         return err;
     }
 };
-const getItemsParams = (auth, hostIds = "10541") => {
+const getItemsParams = (auth, hostIds = "10540") => {
     try {
         const params = {
             params: {
@@ -94,11 +94,11 @@ const getItemsParams = (auth, hostIds = "10541") => {
     }
 };
 
-const getTrendParams = (auth, itemid = "44475") => {
+const getTrendParams = (auth, itemids = "44513") => {
     try {
         const params = {
             params: {
-                itemids: itemid,
+                itemids: itemids,
                 output: [
                     "itemid",
                     "clock",
