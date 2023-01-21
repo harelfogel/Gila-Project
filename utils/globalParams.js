@@ -1,12 +1,14 @@
 const { getHostIdByName } = require("./utils");
 
-const getCreateHostParams = (
+const getCreateHostParams = ({
   auth,
   hostname = "Test-TBD-10",
   groupId = "2",
-  port = "10050"
-) => {
+  port = "10050",
+  req,
+}) => {
   try {
+    const body= req.body;
     const params = {
       authToken: auth,
       port: port,
@@ -23,10 +25,14 @@ const getCreateHostParams = (
   }
 };
 
-const getDeleteHostParams = async (auth, hostname = "Test-TBD-10", hostId = "2") => {
+const getDeleteHostParams = async (
+  auth,
+  hostname = "Test-TBD-10",
+  hostId = "2"
+) => {
   try {
-    hostId= await getHostIdByName("Test-TBD-10");
-    console.log(hostId)
+    hostId = await getHostIdByName("Test-TBD-10");
+    console.log(hostId);
     const params = {
       authToken: auth,
       hostName: hostname,

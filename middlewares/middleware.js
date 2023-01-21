@@ -24,13 +24,13 @@ module.exports = async (req, res, next) => {
     const auth = response.data.result;
     if (auth && req.baseUrl === "/host" && req.method === "POST") {
       // CREATE new host
-      responseParams = getCreateHostParams(auth);
+      responseParams = getCreateHostParams({auth,req});
     } else if (auth && req.baseUrl === "/host" && req.method === "DELETE") {
       // DELETE  host
-      responseParams = getDeleteHostParams(auth);
+      responseParams = getDeleteHostParams({auth,req});
     } else if (auth && req.baseUrl === "/host" && req.method === "GET") {
       // Get all problems in host
-      responseParams = getProblemsParams(auth);
+      responseParams = getProblemsParams({auth,req});
     } else {
       throw `Route is not exist.Cannot login to Zabbix.`;
     }
