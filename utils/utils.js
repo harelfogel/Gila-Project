@@ -129,7 +129,7 @@ const getAllHosts = async (auth) => {
       params: {
         output: "extend",
       },
-      auth: auth,
+      auth,
       id: 1,
     };
 

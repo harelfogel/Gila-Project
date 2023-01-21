@@ -2,24 +2,25 @@ const { getHostIdByName } = require("./utils");
 
 const getCreateHostParams = ({
   auth,
-  hostname = "Test-TBD-10",
-  groupId = "2",
-  port = "10050",
   req,
+  port = "10050",
 }) => {
   try {
-    const body= req.body;
+    const body = req.body;
+    const groupid = req.body.host_groups
     const params = {
-      authToken: auth,
+      // authToken: auth,
       port: port,
-      hostName: hostname,
+      ip: body.params.host_ip,
+      hostName: body.params.host_name,
       groups: [
         {
-          groupid: groupId,
+          groupid: [groupid],
         },
       ],
     };
-    return params;
+    console.log({yovell:params})
+    return params
   } catch (err) {
     return err;
   }
