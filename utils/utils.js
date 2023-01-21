@@ -91,11 +91,11 @@ const getHostIdByName = async (
     const getHostIdPayload = {
       jsonrpc: "2.0",
       method: "host.get",
-      params: {
-        filter: {
-          host: hostNamesList
-        },
-      },
+      // params: {
+      //   filter: {
+      //     host: hostNamesList,
+      //   },
+      // },
       auth: auth,
       id: 1,
     };
@@ -104,6 +104,7 @@ const getHostIdByName = async (
       getHostIdPayload
     );
     const NamesList = response.data.result;
+    console.log(NamesList);
     NamesList.forEach((element) => {
       if (element.name === desiredName) {
         isHostIdFound = true;
@@ -120,9 +121,51 @@ const getHostIdByName = async (
   }
 };
 
+const getAllHosts = async (auth) => {
+  try {
+    const getAllHostPayload = {
+      jsonrpc: "2.0",
+      method: "host.get",
+      params: {
+        output: "extend",
+      },
+      auth: auth,
+      id: 1,
+    };
+
+    const response = await axios.post(
+      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+      getAllHostPayload
+    );
+    let hostsObject = response.data.result;
+    if (!hostsObject) {
+      throw `Empty Host List`;
+    }
+    let hostsList = hostsObject.map((element) => element.name);
+    return hostsList;
+  } catch (err) {
+    return err;
+  }
+};
+
+const isHostExists = async (auth, hostName) => {
+  try {
+    if (!auth) {
+      throw `Bad auth Token`;
+    }
+
+    let hostList = await getAllHosts(auth);
+    return hostList.includes(hostName);
+  } catch (err) {
+    return err;
+  }
+};
+
 module.exports = {
   replaceSpacesWithUnderScore,
   stringToArray,
   getGroupIdByName,
-  getHostIdByName
+  getHostIdByName,
+  getAllHosts,
+  isHostExists,
 };

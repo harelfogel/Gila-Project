@@ -22,7 +22,6 @@ module.exports = async (req, res, next) => {
       payload
     );
     const auth = response.data.result;
-
     if (auth && req.baseUrl === "/host" && req.method === "POST") {
       // CREATE new host
       responseParams = getCreateHostParams(auth);
@@ -33,11 +32,11 @@ module.exports = async (req, res, next) => {
       // Get all problems in host
       responseParams = getProblemsParams(auth);
     } else {
-      throw `Bad Token.Cannot login to Zabbix.`;
+      throw `Route is not exist.Cannot login to Zabbix.`;
     }
     req.data = responseParams;
     next();
   } catch (err) {
-    res.status(401).json({ message: `Cannot login to Zabbix.:${err}` });
+    res.status(401).json({ message: `${err}` });
   }
 };

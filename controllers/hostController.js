@@ -1,12 +1,14 @@
 const axios = require("axios");
+const { isHostExists } = require("../utils/utils");
 
 exports.hostController = {
   async createHost(req, res) {
     try {
 
       const middlewarepayload = req.data;
-      console.log('inm in host conroller')
-      console.log(middlewarepayload);
+      if((await isHostExists(middlewarepayload.authToken,middlewarepayload.hostName)) == true){
+        throw `Host is already exist.`;
+      }
 
       const createHostPayload = {
         jsonrpc: "2.0",
