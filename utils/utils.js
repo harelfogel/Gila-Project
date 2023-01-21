@@ -27,52 +27,7 @@ const stringToArray = (str) => {
   }
 };
 
-const getGroupIdByName = async ({
-  auth,
-  namesList = ["Zabbix servers", "Linux servers"],
-  desiredName
-}) => {
-  try {
-    let retGroupId = "";
-    let isGroupIdFound = false;
-    if (!auth) {
-      throw "Bad Token";
-    }
-    if (!namesList) {
-      throw "Cannot Find nameList for getting Group Id";
-    }
-    const getGroupIdPayload = {
-      jsonrpc: "2.0",
-      method: "hostgroup.get",
-      params: {
-        output: "extend",
-        filter: {
-          name: namesList,
-        },
-      },
-      auth: auth,
-      id: 1,
-    };
-    const response = await axios.post(
-      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
-      getGroupIdPayload
-    );
-    const groupNamesList = response.data.result;
-    groupNamesList.forEach((element) => {
-      if (element.name === desiredName) {
-        isGroupIdFound = true;
-        retGroupId = element.groupid;
-      }
-    });
-    if (!isGroupIdFound) {
-      throw "Cannot find group id for host";
-    }
-    return retGroupId;
-  } catch (err) {
-    console.log(err);
-    return err;
-  }
-};
+
 
 const getHostIdByName = async (
   auth,
@@ -91,11 +46,6 @@ const getHostIdByName = async (
     const getHostIdPayload = {
       jsonrpc: "2.0",
       method: "host.get",
-      // params: {
-      //   filter: {
-      //     host: hostNamesList,
-      //   },
-      // },
       auth: auth,
       id: 1,
     };
@@ -161,20 +111,20 @@ const isHostExists = async (auth, hostName) => {
   }
 };
 
-const getGoogleResponse= (hostName, resMethod)=>{
-  try{
-    if(hostName){
-      let textToSpeech=``;
-      if(resMethod === 'create host'){
-        textToSpeech=`The user ${hostName} has been created successfully`
+const getGoogleResponse = (hostName, resMethod) => {
+  try {
+    if (hostName) {
+      let textToSpeech = ``;
+      if (resMethod === 'create host') {
+        textToSpeech = `The user ${hostName} has been created successfully`
       }
-      else if(resMethod === 'delete host'){
-        textToSpeech=`The user ${hostname} has been deleted succesfully`;
+      else if (resMethod === 'delete host') {
+        textToSpeech = `The user ${hostname} has been deleted succesfully`;
       }
-      else if(retMethod==='get all problems'){
-        textToSpeech=`Ok. Here is all the problems:`;
+      else if (retMethod === 'get all problems') {
+        textToSpeech = `Ok. Here is all the problems:`;
       }
-      const retObject= {
+      const retObject = {
         expectUserResponse: true,
         expectedInputs: [
           {
@@ -195,29 +145,78 @@ const getGoogleResponse= (hostName, resMethod)=>{
               }
             }
           }
-        ]  
+        ]
+      }
+      return retObject;
+    } else {
+      throw `Invalid hostName`;
     }
-    return retObject;
-  } else{
-    throw `Invalid hostName`;
-  }
-  } catch(err){
+  } catch (err) {
     return err;
   }
 }
 
 const getAuth = async () => {
-  try{
+  try {
+    const payload = {
+      jsonrpc: "2.0",
+      method: "user.login",
+      params: {
+        user: 'Admin',
+        password: 'zabbix',
+      },
+      id: 2,
+      auth: null,
+    };
     const response = await axios.post(
       `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
       payload
-      );
-      return response.data.result;
-    }
-    catch(err){
-      return `Can't get auth: ${err}`;
-    }
+    );
+    console.log({ response: response.data })
+    return response.data.result;
+  }
+  catch (err) {
+    return `Can't get auth: ${err}`;
+  }
 }
+
+const getGroupIdByName = async ({auth,namesList}) => {
+  try {
+    if (!auth) {
+      console.log("Auth is not defined" + auth);
+      throw "Bad Token";
+    }
+    if (!namesList) {
+      throw "Cannot Find nameList for getting Group Id";
+    }
+    const getGroupIdPayload = {
+      jsonrpc: "2.0",
+      method: "hostgroup.get",
+      params: {
+        output: "extend",
+        filter: {
+          name: namesList,
+        },
+      },
+      auth: auth,
+      id: 1,
+    };
+    const response = await axios.post(
+      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+      getGroupIdPayload
+    );
+    const groupNamesList = response.data.result;
+
+
+    const groupNamesListNames = groupNamesList.map((element) => { return { name: element.name, groupid: element.groupid } });
+
+    return groupNamesListNames
+
+  } catch (err) {
+    console.log(err);
+    return err;
+  }
+};
 
 module.exports = {
   replaceSpacesWithUnderScore,
