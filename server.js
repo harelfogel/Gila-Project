@@ -7,6 +7,8 @@ const bodyParser = require('body-parser')
 const https = require('https');
 const fs = require('fs');
 const { hostController } = require("./controllers/hostController");
+const { groupController } = require("./controllers/groupsController");
+const { getGroupIdByName, getAuth } = require("./utils/utils");
 const CERT_PATH = '/etc/letsencrypt/live/gila.shenkar.cloud/fullchain.pem';
 const KEY_PATH = '/etc/letsencrypt/live/gila.shenkar.cloud/privkey.pem';
 
@@ -23,10 +25,10 @@ expressApp.use((req, res, next) => {
   next();
 });
 
-app.handle('createHost', conv => {
+app.handle('createHost', async conv  => {
   console.log('*********createHost******');
-  hostController.createNewHost({params: conv.session.params})
-  conv.add(resText);
+  const response = await hostController.createNewHost({params: conv.session.params})
+  conv.add(response.message);
 });
 
 app.handle('deleteHost', conv => {
@@ -49,14 +51,16 @@ app.handle('ackProblem', conv => {
   conv.add(resText);
 });
 
-app.handle('createGroup', conv => {
+app.handle('createGroup', async conv => {
   console.log('*********createGroup******');
-  conv.add(resText);
+  const response = await groupController.createGroup({params: conv.session.params})
+  conv.add(response.message);
 });
 
-app.handle('deleteGroup', conv => {
+app.handle('deleteGroup', async conv => {
   console.log('*********deleteGroup******');
-  conv.add(resText);
+  const response = await groupController.deleteGroup({params: conv.session.params})
+  conv.add(response.message);
 });
 
 app.handle('editHost', conv => {
@@ -68,6 +72,14 @@ app.handle('cloneHost', conv => {
   console.log('*********cloneHost******');
   conv.add(resText);
 });
+
+app.handle('createUser', async conv => {
+  console.log('*********createUser******');
+  const response = await groupController.createUser({params: conv.session.params})
+
+  conv.add(resText);
+});
+
 
 expressApp.post('/fulfillment', app);
 
