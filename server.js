@@ -2,6 +2,7 @@ const express = require("express");
 require('dotenv').config();
 const { conversation } = require('@assistant/conversation')
 const port = 443;
+const bodyParser = require('body-parser')
 
 const https = require('https');
 const fs = require('fs');
