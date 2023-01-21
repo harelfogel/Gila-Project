@@ -23,7 +23,6 @@ module.exports = async (req, res, next) => {
       payload
     );
     const auth = response.data.result;
-    console.log({auth})
     if (auth && req.baseUrl === "/host" && req.method === "POST") {
       // CREATE new host
       responseParams = getCreateHostParams({req});
@@ -37,7 +36,6 @@ module.exports = async (req, res, next) => {
       throw `Route is not exist.Cannot login to Zabbix.`;
     }
     req.data = {...responseParams, auth};
-    console.log("middleware", req.data)
     next();
   } catch (err) {
     res.status(401).json({ message: `${err}` });

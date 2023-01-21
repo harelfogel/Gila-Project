@@ -21,8 +21,6 @@ app.use('/host', hostRouter);
 
 
 
-
-
 app.use((req, res) => {
     res.status(400).send('Something is broken!');
   });

@@ -161,6 +161,52 @@ const isHostExists = async (auth, hostName) => {
   }
 };
 
+const getGoogleResponse= (hostName, resMethod)=>{
+  try{
+    if(hostName){
+      let textToSpeech=``;
+      if(resMethod === 'create host'){
+        textToSpeech=`The user ${hostName} has been created successfully`
+      }
+      else if(resMethod === 'delete host'){
+        textToSpeech=`The user ${hostname} has been deleted succesfully`;
+      }
+      else if(retMethod==='get all problems'){
+        textToSpeech=`Ok. Here is all the problems:`;
+      }
+      const retObject= {
+        expectUserResponse: true,
+        expectedInputs: [
+          {
+            possibleIntents: [
+              {
+                intent: "actions.intent.TEXT"
+              }
+            ],
+            inputPrompt: {
+              richInitialPrompt: {
+                items: [
+                  {
+                    simpleResponse: {
+                      textToSpeech: textToSpeech
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]  
+    }
+    return retObject;
+  } else{
+    throw `Invalid hostName`;
+  }
+  } catch(err){
+    return err;
+  }
+}
+
+
 module.exports = {
   replaceSpacesWithUnderScore,
   stringToArray,
@@ -168,4 +214,5 @@ module.exports = {
   getHostIdByName,
   getAllHosts,
   isHostExists,
+  getGoogleResponse
 };

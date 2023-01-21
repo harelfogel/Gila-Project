@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { isHostExists } = require("../utils/utils");
+const { isHostExists,getGoogleResponse } = require("../utils/utils");
 
 exports.hostController = {
   async createHost(req, res) {
@@ -45,29 +45,8 @@ exports.hostController = {
         `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
         createHostPayload
       );
-      res.json({
-        expectUserResponse: true,
-        expectedInputs: [
-          {
-            possibleIntents: [
-              {
-                intent: "actions.intent.TEXT"
-              }
-            ],
-            inputPrompt: {
-              richInitialPrompt: {
-                items: [
-                  {
-                    simpleResponse: {
-                      textToSpeech: `The user ${middlewarepayload.hostName} has been created successfully`
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        ] 
-      }); 
+      const googleResponse=getGoogleResponse(middlewarepayload.hostName,'create host'); 
+      res.json({googleResponse}); 
 
     } catch (err) {
       res.status(404).json({ message: `Cant create Host:  ${err}` });
@@ -88,8 +67,9 @@ exports.hostController = {
         `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
         deletePayload
       );
+      const googleResponse=getGoogleResponse(middlewarePayload.params.hostName,'delete host');
       res.json({
-        message: `Host ${middlewarePayload.params} has been deleted`,
+        googleResponse
       });
     } catch (error) {
       res.status(404).json({ message: `Cant delete Host:  ${err}` });
