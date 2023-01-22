@@ -17,7 +17,14 @@ const expressApp = express().use(bodyParser.json());
 
 const resText = "These are not the droids you are looking for."
 
+const arr1 = ['pzza', 'coa'];
+const arr2 = ['pizza', 'cake', 'cola'];
 
+const containsAll = arr1.every(element => {
+  return arr2.includes(element);
+});
+
+console.log(containsAll); // 👉️ true
 
 expressApp.use((req, res, next) => {
   console.log(`Request URL: ${req.url}`);

@@ -1,19 +1,15 @@
 const axios = require("axios");
 const { isHostExists,getGoogleResponse, getAuth, stringToArray, getGroupIdByName, getHostIdByName, getAllHosts } = require("../utils/utils");
 
-
-
 exports.hostController = {
 
   async createNewHost({params}) {
     console.log({params})
     try{
       const auth = await getAuth();
-      console.log({auth})
       const hostName = params.host_name;
       const groupList = stringToArray(params.host_groups)
       if (await isHostExists(auth, hostName) == true){
-        console.log("CHECK")
         return {
           status: false,
           message: `${hostName} is already exist.`
@@ -25,16 +21,12 @@ exports.hostController = {
           value: item
         }
       })
-      console.log({groupList})
       const groupsIds = await getGroupIdByName({auth, namesList: groupList })
       if(groupsIds.length !== groupList.length){
         return {
           status: false,
           message: "Group name not found"}
       }
-
-      console.log({groupsIds})
-
       const payload = {
         jsonrpc: "2.0",
         method: "host.create",
@@ -64,42 +56,46 @@ exports.hostController = {
 
   
 
-
-
   async deleteHost({params}) {
     try {
-      console.log({params})
-      const hostName = params.host_name;
+      const hostNameArray = stringToArray(params.host_name);
       const auth = await getAuth();
       const allHosts = await getAllHosts(auth);
-      const allIds = await getHostIdByName(auth, allHosts)
-      const hostId = allIds.filter(item => hostName === item.name)
-      console.log({hostId}, [hostId[0].hostid])
-      
-      // const middlewarePayload = req.data;
+      const allIds = await getHostIdByName(auth, allHosts);
+      const reqIds= await getHostIdByName(auth, hostNameArray);
+      const hostIdsArray= reqIds.map(hostId=>hostId.hostid);
+      const allHostIdArray=allIds.map(allHostsIds=>allHostsIds.hostid);
+      console.log(hostIdsArray);
+      console.log(allHostIdArray);
+      const isHostsIdsExists= hostIdsArray.every(host =>{
+        return allHostIdArray.includes(host);
+      });
+
+      console.log(isHostsIdsExists);
+      if(isHostsIdsExists === false){
+        throw `Host name is not exists`;
+      }
       const payload = {
         jsonrpc: "2.0",
         method: "host.delete",
-        params: [hostId[0].hostid],
+        params: hostIdsArray,
         auth,
         id: 3,
       };
       const response = await axios.post(
         `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
         payload
-      );
-
-      console.log({delete_data: response.data})
-      
+      );      
       return {
         status: true,
-        message: `${hostName} has been deleted`
+        message: `${hostNameArray} has been deleted`
       }
 
     } catch (error) {
-      
-      // res.status(404).json({ message: `Cant delete Host:  ${err}` });
-      console.log(err);
+      return {
+        status:false,
+        message:`Cannot delete: ${error}`
+      };
     }
   },
   async getAllProblems(req, res) {

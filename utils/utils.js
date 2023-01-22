@@ -208,32 +208,13 @@ const getHostIdByName = async (
       `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
       getHostIdPayload
     );
-
-    console.log({response: response.data})
-
-    
-
     const hostsIds =  response.data.result.map(item => {
       return {
         name: item.name,
         hostid: item.hostid
       }
     })
-
-    
-
-    return hostsIds
-    // const NamesList = response.data.result;
-    // console.log({NamesList});
-    // NamesList.forEach((element) => {
-    //   if (element.name === desiredName) {
-    //     isHostIdFound = true;
-    //     retHostId = element.hostid;
-    //   }
-    // });
-    // if (!isHostIdFound) {
-    //   throw "Cannot find host id for host";
-    // }
+    return hostsIds;
   } catch (err) {
     console.log(err);
     return err;
@@ -277,6 +258,15 @@ const getGroupIdByName = async ({auth,namesList}) => {
     return err;
   }
 };
+
+// const getRequestedValues=(arr1,arr2) =>{
+//   console.log('im in!!!!--------------getRequestedValues')
+//   return arr1.filter(object1 =>{
+//     return arr2.some(object2=>{
+//       return object1.hostid===object2.hostid;
+//     });
+//   });
+// }
 
 module.exports = {
   replaceSpacesWithUnderScore,
