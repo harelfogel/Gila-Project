@@ -95,5 +95,8 @@ exports.hostController = {
       res.status(404).json({ message: `Cannot get all problems: ${err}` });
     }
   },
+  async getHealthCheck(req, res) {
+    res.json({ message: 'hello from gila' });
+  },
 };
 
