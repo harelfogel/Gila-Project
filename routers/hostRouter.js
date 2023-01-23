@@ -8,4 +8,5 @@ module.exports = { hostRouter};
 hostRouter.post('/' ,middleware,hostController.createHost);
 hostRouter.delete('/' ,middleware,hostController.deleteHost);
 hostRouter.get('/' ,middleware,hostController.getAllProblems);
+hostRouter.get('/helathcheck' ,middleware,hostController.getHealthCheck);
 
