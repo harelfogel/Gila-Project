@@ -3,8 +3,6 @@ const { getAuth, getGroupIdByName } = require("../utils/utils");
 
 
 const createGroup = async function ({ params }) {
-    console.log("createGroup()")
-    console.log({ params })
     try {
         const auth = await getAuth();
         const groupName = params.group_name;

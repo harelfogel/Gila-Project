@@ -17,14 +17,15 @@ const expressApp = express().use(bodyParser.json());
 
 const resText = "These are not the droids you are looking for."
 
-const arr1 = ['pzza', 'coa'];
-const arr2 = ['pizza', 'cake', 'cola'];
+const testAuth= '8f774ea17b24a26fb8c0295dbc20786a';
 
-const containsAll = arr1.every(element => {
-  return arr2.includes(element);
-});
+const problemsTest=async ()=>{
+  const test=await hostController.listAllProblems('10084');
+  console.log({test:test.message})
+}
 
-console.log(containsAll); // 👉️ true
+problemsTest();
+
 
 expressApp.use((req, res, next) => {
   console.log(`Request URL: ${req.url}`);
@@ -50,9 +51,11 @@ app.handle('listHosts', conv => {
   conv.add(resText);
 });
 
-app.handle('listProblems', conv => {
+app.handle('listProblems', async conv => {
   console.log('*********listProblems******');
-  conv.add(resText);
+  const response = await hostController.listAllProblems({params: conv.session.params});
+  console.log({message: response.message})
+  conv.add(response.message);
 });
 
 app.handle('ackProblem', conv => {
@@ -88,6 +91,7 @@ app.handle('createUser', async conv => {
 
   conv.add(resText);
 });
+
 
 
 expressApp.post('/fulfillment', app);

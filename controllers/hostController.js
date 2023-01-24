@@ -1,14 +1,22 @@
 const axios = require("axios");
-const { isHostExists,getGoogleResponse, getAuth, stringToArray, getGroupIdByName, getHostIdByName, getAllHosts } = require("../utils/utils");
+const { isHostExists,getGoogleResponse, getAuth, stringToArray, getGroupIdByName, getHostIdByName, getAllHosts, isValidIpAddress, getHostNameById,getSeverityNameById, cleanStringFromChars } = require("../utils/utils");
+const _ = require('lodash');
+const Problem = require("zabbix-rpc/lib/modules/Problem");
+
+const DEFAULT_PORT = '10050'
+
+
 
 exports.hostController = {
 
   async createNewHost({params}) {
-    console.log({params})
+    const hostIp = params.host_ip.replace(/\s/g, '');
+    const auth = await getAuth();
+    const hostName = params.host_name;
+    const groupList = stringToArray(params.host_groups)
     try{
-      const auth = await getAuth();
-      const hostName = params.host_name;
-      const groupList = stringToArray(params.host_groups)
+      if(!isValidIpAddress(hostIp))
+        throw 'Invalid IP address'
       if (await isHostExists(auth, hostName) == true){
         return {
           status: false,
@@ -33,9 +41,19 @@ exports.hostController = {
         params:{
           host: hostName,
           groups: groupsIds,
-          tags
+          tags,
+          interfaces: [
+            {
+              type: 1,
+              main: 1,
+              useip: 1,
+              ip: hostIp,
+              dns: "",
+              port: DEFAULT_PORT
+            }
+          ],
         },
-        auth: auth,
+          auth: auth,
         id: 1
       }
 
@@ -43,14 +61,17 @@ exports.hostController = {
         `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
         payload
       );
-      console.log({createHostResponse: response.data.error})
       return {
         status: true,
         message: `${hostName} created successfully.`
       }
     }
     catch(err){
-      console.log(err)
+
+      return {
+        status: false,
+        message: `Can't create host: ${hostName}. error: ${err} `
+      }
     }
   },
 
@@ -65,14 +86,7 @@ exports.hostController = {
       const reqIds= await getHostIdByName(auth, hostNameArray);
       const hostIdsArray= reqIds.map(hostId=>hostId.hostid);
       const allHostIdArray=allIds.map(allHostsIds=>allHostsIds.hostid);
-      console.log(hostIdsArray);
-      console.log(allHostIdArray);
-      const isHostsIdsExists= hostIdsArray.every(host =>{
-        return allHostIdArray.includes(host);
-      });
-
-      console.log(isHostsIdsExists);
-      if(isHostsIdsExists === false){
+      if(isHostExists(allHostIdArray,hostIdsArray) === false){
         throw `Host name is not exists`;
       }
       const payload = {
@@ -98,28 +112,63 @@ exports.hostController = {
       };
     }
   },
-  async getAllProblems(req, res) {
-    try {
-      const middlewareProblemsPayload = req.data;
-      const problemsPayload=
-        {
-        jsonrpc: "2.0",
-        method: "problem.get",
-        params: middlewareProblemsPayload.params,
-        auth: middlewareProblemsPayload.auth,
+
+  async listAllProblems({params}) {
+    try{
+      const auth = await getAuth();
+      const hostName = 'Zabbix server';
+      //const hostName = params.host_name;
+      const allHosts = await getAllHosts(auth);
+      const allHostsIds = await getHostIdByName(auth, allHosts);
+      const host = allHostsIds.filter(({name}) => name === hostName)
+      const { hostid } = host[0];
+      const payload = {
+        jsonrpc: '2.0',
+        method: 'problem.get',
+        params: {
+          hostids: [hostid],
+          output: 'extend'
+        },
+        auth: auth,
         id: 1
+      }
+      const response  = await axios.post(
+        `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+        payload
+      );
+      const problems = _.get(response,'data.result',[]);
+      const shortProblemsArray= problems.map((problem)=>{
+        return {
+          problemName:problem.name,
+          severity:getSeverityNameById(problem.severity),
+          hostName:hostName 
         }
-        const response  = await axios.post(
-          `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
-          problemsPayload
-        );
-        res.json({
-          message: `${response.data.result}`
-        });
-      //   res.json({ message: `${auth}` });
-    } catch (err) {
-      res.status(404).json({ message: `Cannot get all problems: ${err}` });
+      })
+       problemsMessage= shortProblemsArray.map((problemElem,index) => {
+        return(
+        `Problem number ${index},Problem name is:${problemElem.problemName},Problem severity is:${problemElem.severity}, Problem readback host name is:${problemElem.hostName}`
+        )
+      });
+      let problemsString=JSON.stringify(problemsMessage);
+      //clean string from '[' , ']' and "," characters for cleaner reading for google assiataint
+      let sanitizationRetProblems=cleanStringFromChars(problemsString);  
+      if(problems.length){
+        return {
+          status: true,
+          message:sanitizationRetProblems
+        }
+      } else{
+        throw `Empty problems list`;
+      }
+
+    }
+    catch(err){
+      return {
+        status:false,
+        message:`Cannot get problems: ${err}`
+      };
     }
   },
+
 };
 
