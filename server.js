@@ -24,16 +24,6 @@ const resText = "These are not the droids you are looking for."
 
 const testAuth= '8f774ea17b24a26fb8c0295dbc20786a';
 
-const problemsTest=async ()=>{
-  const test=await problemsController.listAllClosableProblems('10084');
- console.log(test);
-  //console.log(await listAllClosableTriggers(''));
-}
-
-
-problemsTest();
-
-
 expressApp.use((req, res, next) => {
   console.log(`Request URL: ${req.url}`);
   console.log(`Request Body: ${JSON.stringify(req.body)}`);
@@ -60,7 +50,7 @@ app.handle('listHosts', conv => {
 
 app.handle('listProblems', async conv => {
   console.log('*********listProblems******');
-  const response = await hostController.listAllProblems({params: conv.session.params});
+  const response = await problemsController.listAllProblems({params: conv.session.params, type:'all'});
   console.log({message: response.message})
   conv.add(response.message);
 });
@@ -134,6 +124,41 @@ app.handle("hostNameSlotValidation", async conv => {
   }
 });
 
+app.handle("createHostSlotValidation", async conv => {
+  console.log('*********createHostSlotValidation******');
+  const hostName = conv.scene.slots['host_name'].value;
+  const auth = await getAuth();
+  const hostExists = await isHostExists(auth, hostName);
+  let speachToSay = '';
+  console.log({hostName, hostExists});
+  if(hostExists){
+    console.log('host already exists');
+    conv.scene.slots['host_name'].status = 'INVALID';
+    speachToSay = `<speak>Host ${hostName} already exists</speak>`;
+    return;
+  }
+  let ip = conv.scene.slots['ip'].value;
+  ip = ip.toUpperCase();
+  const numberNames = ["ZERO","ONE","TWO","THREE","FOUR","FIVE","SIX","SEVEN","EIGHT","NINE"];
+  for(i in numberNames) {
+    ip = ip.replaceAll(numberNames[i], Number(i));
+  }
+  ip = ip.replaceAll(" ", "");
+  ip = ip.replaceAll("DOT", ".");
+  ip = ip.replaceAll("POINT", ".");
+  if(ip.match(match(/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}/g))) {
+    conv.scene.slots['ip'].value = ip;
+  } else {
+    conv.scene.slots['ip'].status = 'INVALID';
+    speachToSay = speachToSay.length > 0 ? speachToSay + '<speak> , and ' : "<speak>";
+    speachToSay += `IP ${ip} is not valid, </speak>`;
+  }
+  if(speachToSay.length > 0) {
+    speachToSay += '<speak> <break time="600ms"/> please try again ';
+    conv.add(speachToSay);
+  }
+});
+
 app.handle('ackProblem', conv => {
   console.log('*********ackProblem******');
   conv.add(resText);
@@ -151,9 +176,12 @@ app.handle('deleteGroup', async conv => {
   conv.add(response.message);
 });
 
-app.handle('editHost', conv => {
+app.handle('editHost', async conv => {
   console.log('*********editHost******');
-  conv.add(resText);
+  console.log({params: conv.session.params});
+  const response = await hostController.updateHost({params: conv.session.params});
+  console.log({response});
+  conv.add(response.message);
 });
 
 app.handle('cloneHost', conv => {
