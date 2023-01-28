@@ -1,4 +1,5 @@
 const axios = require("axios");
+const _ = require('lodash');
 
 const replaceSpacesWithUnderScore = (str) => {
   try {
@@ -14,10 +15,48 @@ const replaceSpacesWithUnderScore = (str) => {
   }
 };
 
+const getAllProblemsByHostName = async (hostName = 'Zabbix server') => {
+  try {
+    const auth = await getAuth();
+    //const hostName = 'Zabbix server';
+    //const hostName = params.host_name;
+    const allHosts = await getAllHosts(auth);
+    const allHostsIds = await getHostIdByName(auth, allHosts);
+    const host = allHostsIds.filter(({ name }) => name === hostName);
+    const { hostid } = host[0];
+    const payload = {
+      jsonrpc: '2.0',
+      method: 'problem.get',
+      params: {
+        hostids: [hostid],
+        output: 'extend'
+      },
+      auth: auth,
+      id: 1
+    }
+
+    const response = await axios.post(
+      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+      payload
+    );
+    const problems = _.get(response, 'data.result', []);
+    return problems
+  }
+  catch (err) {
+    console.log(err)
+  }
+}
+
+const getProblemIdByName = (problems, _name) => {
+  const problem = problems.filter(({ name }) => name === _name);
+  const { eventid } = problem[0];
+  return eventid;
+}
+
 const stringToArray = (str) => {
   try {
     if (str) {
-      let res = str.split(",");
+      let res = str.split(", ");
       return res;
     } else {
       throw `Bad zabbix name`;
@@ -116,17 +155,23 @@ const getHostIdByName = async (
       `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
       getHostIdPayload
     );
+
     const hostsIds = response.data.result.map(item => {
       return {
         name: item.name,
         hostid: item.hostid
       }
     })
+    if (!hostsIds.length) {
+      throw "host was not found"
+    }
+    console.log({ hostsIds })
     return hostsIds;
   } catch (err) {
     console.log(err);
-    return err;
+    return [];
   }
+
 };
 
 
@@ -288,6 +333,17 @@ const getTemplateIdByName = async (
   }
 };
 
+const sevirityMap = {
+  '0': 'Not classifie',
+  '1': 'Information',
+  '2': 'Warning',
+  '3': 'Average',
+  '4': 'High',
+  '5': 'Disaster',
+
+}
+
+
 const getSeverityNameById = (severityId) => {
   let severityName = '';
   switch (severityId) {
@@ -317,12 +373,189 @@ const getSeverityNameById = (severityId) => {
   return severityName;
 }
 
+const cleanStringFromChars = (str) => {
+  const removeChars = ['[', ']', '"', '{', '}'];
+  removeChars.forEach(charElem => str = str.split(charElem).join(''));
+  return str;
+}
 
-const cleanStringFromChars=(str)=>{
-  let sanitizationRetProblems= str.split('[').join('');
-  sanitizationRetProblems=sanitizationRetProblems.split(']').join('');
-  sanitizationRetProblems=str.split('"').join('');  
-  return sanitizationRetProblems;
+
+const listAllClosableTriggers = async ( params ) => {
+  try {
+    const auth = await getAuth();
+    console.log({params:params});
+   const hostName= _.get(params, 'host_name');
+   console.log({hostName:hostName});
+    const allHosts = await getAllHosts(auth);
+    const allHostsIds = await getHostIdByName(auth, allHosts);
+    const host = allHostsIds.filter(({ name }) => name === hostName);
+    console.log(host);
+    const { hostid } = host[0];
+    const payload = {
+      jsonrpc: "2.0",
+      method: "trigger.get",
+      params: {
+        hostids: hostid,
+        output: "extend",
+        selectFunctions: "extend"
+      },
+      auth,
+      id: 1
+    }
+    const response = await axios.post(
+      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+      payload
+    );
+    const triggers = _.get(response, 'data.result', []);
+    const triggersObjets = triggers.map(trigger => {
+      return {
+        triggerid: trigger.triggerid,
+        description: trigger.description,
+        templateid: trigger.templateid,
+        manual_close: trigger.manual_close,
+        expression: trigger.expression
+      }
+    })
+    if (!triggersObjets.length) {
+      throw `Empty Triggers list`;
+    }
+    const closableTriggers = triggersObjets.filter(trigger => trigger.manual_close === "1");
+    return closableTriggers;
+  }
+  catch (err) {
+    return `Cannot List all triggers: ${err}`;
+  }
+}
+
+const getHostByName = async (auth, hostName) => {
+  try {
+    let payload = {
+      jsonrpc: "2.0",
+      method: "host.get",
+      params: {
+        output: "extend",
+        filter: {
+          host: hostName
+        }
+      },
+      auth,
+      id: 1
+    }
+    let response = await axios.post(
+      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+      payload
+    );
+    const host = _.get(response, 'data.result[0]', null);
+    if (host) {
+      // get all host's groups names
+      payload = {
+        jsonrpc: "2.0",
+        method: "hostgroup.get",
+        params: {
+          output: "extend",
+          hostids: host.hostid
+        },
+        auth,
+        id: 1
+      }
+      response = await axios.post(
+        `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+        payload
+      );
+      console.log(response.data.result)
+      const groups = _.get(response, 'data.result', []).map(item => item.name);
+      host.groups = groups;
+      // get all host's templates names
+      payload = {
+        jsonrpc: "2.0",
+        method: "template.get",
+        params: {
+          output: "extend",
+          hostids: host.hostid
+        },
+        auth,
+        id: 1
+      }
+      response = await axios.post(
+        `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+        payload
+      );
+      console.log(response.data.result)
+      const templates = _.get(response, 'data.result', []).map(item => item.name);
+      host.templates = templates;
+    }
+    return host;
+  }
+  catch (err) {
+    return null
+  }
+}
+
+
+const getAllUsersGroups = async (auth) => {
+  try {
+    if (!auth) {
+      throw `Invalid token`;
+    }
+
+    const userGroupsIdPayload = {
+      jsonrpc: "2.0",
+      method: "usergroup.get",
+      params: {
+        output: "extend",
+        status: 0
+      },
+      auth: auth,
+      id: 1
+    }
+    const response = await axios.post(
+      `${process.env.ZABBIX_SERVER_URL}/zabbix/api_jsonrpc.php`,
+      userGroupsIdPayload
+    );
+    let userGroups = response.data.result;
+    if (!userGroups) {
+      throw `Empty Template List`;
+    }
+    let userGroupsList = userGroups.map((element) => element.name);
+    return userGroupsList;
+
+  } catch (err) {
+    return err;
+  }
+}
+
+
+const usersGroupsCorrection = (userGroupName) => {
+  try {
+    const accurateUserGruopName = ['Zabbix administrators', 'Guests', 'Enabled debug mode', 'No access to the frontend']
+    if (!userGroupName) {
+      throw `Bad User group`;
+    }
+
+    if (userGroupName.startsWith('za') || userGroupName.startsWith('Za') || userGroupName.startsWith('zab') || userGroupName.startsWith('Zab')) {
+      userGroupName = accurateUserGruopName[0];
+    }
+
+    else if (userGroupName.startsWith('Gu') || userGroupName.startsWith('gu') || userGroupName.startsWith('g') || userGroupName.startsWith('G')) {
+      userGroupName = accurateUserGruopName[1];
+    }
+
+    else if (userGroupName.startsWith('En') || userGroupName.startsWith('en') || userGroupName.startsWith('e') || userGroupName.startsWith('E')) {
+      userGroupName = accurateUserGruopName[2];
+    }
+
+    else if (userGroupName.startsWith('No') || userGroupName.startsWith('no')) {
+      userGroupName = accurateUserGruopName[3];
+    }
+    else {
+      throw `Cannot find group name`;
+    }
+    return userGroupName;
+
+  } catch (err) {
+    return `Bad user Group Name:${err}`;
+  }
+
 }
 
 
@@ -341,7 +574,14 @@ module.exports = {
   getTemplateIdByName,
   getSeverityNameById,
   getHostNameById,
-  cleanStringFromChars
+  cleanStringFromChars,
+  getProblemIdByName,
+  getAllProblemsByHostName,
+  listAllClosableTriggers,
+  getHostByName,
+  sevirityMap,
+  getAllUsersGroups,
+  usersGroupsCorrection
 };
 
 

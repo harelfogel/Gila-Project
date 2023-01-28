@@ -1,11 +1,11 @@
 const axios = require("axios");
 const { getAuth, getGroupIdByName } = require("../utils/utils");
-
+const { addStat } = require("../utils/stats");
 
 const createGroup = async function ({ params }) {
     try {
         const auth = await getAuth();
-        const groupName = params.group_name;
+        const groupName = params.group_name.toLowerCase();
         if (!groupName) {
             return {
                 status: false,
@@ -33,6 +33,7 @@ const createGroup = async function ({ params }) {
         }
     }
     catch (err) {
+        addStat("requestError");
         console.log(err);
         return {
             status: false,
@@ -44,10 +45,12 @@ const createGroup = async function ({ params }) {
 const deleteGroup = async function ({ params }) {
     console.log("deleteGroup()")
     console.log({ params});
+    addStat("requestError");
     try {
 
         const auth = await getAuth();
-        const namesList = [params.group_name];
+        const list = [params.group_name];
+        const namesList = list.map(group => group.toLowerCase());
         const groupId = await getGroupIdByName({auth, namesList});
 
         if (!groupId) {

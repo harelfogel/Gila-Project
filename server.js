@@ -11,6 +11,7 @@ const fs = require('fs');
 const { hostController } = require("./controllers/hostController");
 const { groupController } = require("./controllers/groupsController");
 const { problemsController } = require("./controllers/problemsController");
+const { usersController } = require("./controllers/usersController");
 const { addStat, readStats } = require("./utils/stats");
 const { getAuth,isHostExists, listAllTriggersByHostName, listAllClosableTriggers } = require("./utils/utils");
 const { concat } = require("lodash");
@@ -31,8 +32,11 @@ expressApp.use((req, res, next) => {
 });
 
 
+
+
 app.handle('createHost', async conv  => {
   console.log('*********createHost******');
+  console.log({params:conv.session.params});
   const response = await hostController.createNewHost({params: conv.session.params})
   conv.add(response.message);
 });
@@ -40,17 +44,14 @@ app.handle('createHost', async conv  => {
 app.handle('deleteHost', async conv => {
   console.log('*********deleteHost******');
   const response = await hostController.deleteHost({params: conv.session.params})
+  console.log({ofir: conv.scene.slots})
   conv.add(response.message);
 });
 
-app.handle('listHosts', conv => {
-  console.log('*********listHosts******');
-  conv.add(resText);
-});
 
 app.handle('listProblems', async conv => {
   console.log('*********listProblems******');
-  const response = await problemsController.listAllProblems({params: conv.session.params, type:'all'});
+  const response = await problemsController.listAllProblems({params: conv.session.params});
   console.log({message: response.message})
   conv.add(response.message);
 });
@@ -134,28 +135,34 @@ app.handle("createHostSlotValidation", async conv => {
   if(hostExists){
     console.log('host already exists');
     conv.scene.slots['host_name'].status = 'INVALID';
-    speachToSay = `<speak>Host ${hostName} already exists</speak>`;
+    speachToSay = `Host ${hostName} already exists`;
     return;
   }
-  let ip = conv.scene.slots['ip'].value;
+  let ip = conv.scene.slots['raw_host_ip'].value;
+  console.log({ip});
   ip = ip.toUpperCase();
-  const numberNames = ["ZERO","ONE","TWO","THREE","FOUR","FIVE","SIX","SEVEN","EIGHT","NINE"];
+  console.log({ip});
+  console.log(typeof(ip));
+
+  const numberNames = [/ZERO/g,/ONE/g,/TWO/g,/THREE/g,/FOUR/g,/FIVE/g,/SIX/g,/SEVEN/g,/EIGHT/g,/NINE/g];
   for(i in numberNames) {
-    ip = ip.replaceAll(numberNames[i], Number(i));
+    console.log({ip});
+    ip = ip.replace(numberNames[i], i);
   }
-  ip = ip.replaceAll(" ", "");
-  ip = ip.replaceAll("DOT", ".");
-  ip = ip.replaceAll("POINT", ".");
-  if(ip.match(match(/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}/g))) {
-    conv.scene.slots['ip'].value = ip;
+  ip = ip.replace(/ /g, "");
+  ip = ip.replace(/DOT|POINT/g ,".");
+  console.log("ip" + ip + "type: " + typeof(ip) + "length: " + ip.length);
+  if(ip.match(/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}/g)) {
+    conv.session.params.host_ip = ip;
+    // conv.scene.slots['host_ip'].value = ip;
   } else {
-    conv.scene.slots['ip'].status = 'INVALID';
-    speachToSay = speachToSay.length > 0 ? speachToSay + '<speak> , and ' : "<speak>";
-    speachToSay += `IP ${ip} is not valid, </speak>`;
+    conv.scene.slots['raw_host_ip'].status = 'INVALID';
+    speachToSay = speachToSay.length > 0 ? speachToSay + ' , and ' : "";
+    speachToSay += `IP ${ip} is not valid,`;
   }
   if(speachToSay.length > 0) {
-    speachToSay += '<speak> <break time="600ms"/> please try again ';
-    conv.add(speachToSay);
+    speachToSay += '<break time="600ms"/> please try again ';
+    conv.add("<speak>" + speachToSay + "</speak>");
   }
 });
 
@@ -184,16 +191,22 @@ app.handle('editHost', async conv => {
   conv.add(response.message);
 });
 
-app.handle('cloneHost', conv => {
-  console.log('*********cloneHost******');
-  conv.add(resText);
+app.handle('listHosts', async conv => {
+  console.log('*********listHosts******');
+  const response = await hostController.listAllHosts(conv.session.params);
+  conv.add(response.message);
 });
 
 app.handle('createUser', async conv => {
   console.log('*********createUser******');
-  const response = await groupController.createUser({params: conv.session.params})
+  const response = await usersController.createUser({params: conv.session.params})
+  conv.add(response.message);
+});
 
-  conv.add(resText);
+app.handle('deleteUser', async conv => {
+  console.log('*********deleteUser******');
+  const response = await usersController.deleteUser({params: conv.session.params})
+  conv.add(response.message);
 });
 
 expressApp.get('/healthcheck', (req, res) => {

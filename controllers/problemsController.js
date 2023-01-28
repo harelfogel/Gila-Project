@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { isHostExists, getGoogleResponse, getAuth, stringToArray, getGroupIdByName, getHostIdByName, getAllHosts, isValidIpAddress, getHostNameById, getSeverityNameById, cleanStringFromChars, getProblemIdByName, getAllProblems, getAllProblemsByHostName, listAllClosableTriggers } = require("../utils/utils");
+const { isHostExists, getGoogleResponse, getAuth, stringToArray, getGroupIdByName, getHostIdByName, getAllHosts, isValidIpAddress, getHostNameById, getSeverityNameById, cleanStringFromChars, getProblemIdByName, getAllProblems, getAllProblemsByHostName, listAllClosableTriggers, sevirityMap } = require("../utils/utils");
 const _ = require('lodash');
 const Problem = require("zabbix-rpc/lib/modules/Problem");
 const { addStat } = require("../utils/stats");
@@ -7,43 +7,27 @@ const { addStat } = require("../utils/stats");
 const DEFAULT_PORT = '10050'
 
 exports.problemsController = {
-    async listAllClosableProblems({ params }) {
+    async listAllProblems({ params }) {
         try {
-        //const hostName= _.get(params, 'host_name');
-          const hostName = params.host_name; //'Zabbix server';
+          const hostName = _.get(params,'host_name');
           const problems = await getAllProblemsByHostName(hostName);
-          const closableTriggers= await listAllClosableTriggers(hostName);
-          const closableProblems= problems.filter((problemObj)=>{
-            return closableTriggers.some((triggerObj)=>{
-              return problemObj.objectid === triggerObj.triggerid 
-            })
-          })
-          if(!closableProblems.length){
-            throw `Empty Closable problems`;
-          }
-          const filteredProblemsArray = closableProblems.map((problem) => {
-            return {
-              problemName: problem.name,
-              severity: getSeverityNameById(problem.severity),
-              hostName: hostName
-            }
-          })
-
-          const problemsMessage = filteredProblemsArray.map((problemElem, index) => {
+          const problemsMessage = problems.map((problemElem, index) => {
             return (
-              `${problemElem.severity}:${problemElem.problemName}`
+              // `${problemElem.severity}:${problemElem.problemName}`
+              `Problem ${index + 1}: ${problemElem.name}, ${sevirityMap[problemElem.severity]}}`
             )
           });
-          // let problemsString = JSON.stringify(problemsMessage);
+
+          let problemsString = JSON.stringify(problemsMessage);
           //clean string from '[' , ']' and "," characters for cleaner reading for google assiataint
-          // let sanitizationRetProblems = cleanStringFromChars(problemsString);
+          let sanitizationRetProblems = cleanStringFromChars(problemsString);
           if (problems.length) {
             return {
               status: true,
-              message: sanitizationRetProblems
+              message: `Here are the problems of ${hostName}: ${sanitizationRetProblems}`
             }
           } else {
-            throw `Empty problems list`;
+            throw `Empty problems list for the requested host`;
           }
     
         }
@@ -57,10 +41,13 @@ exports.problemsController = {
       },
       async listClosableProblemsByHostName(params) {
         try {
+          const auth = await getAuth();
           const hostName = params.host_name;
-          let hostid = await getHostIdByName(hostName);
+          let hostid = await getHostIdByName(auth,hostName);
+          console.log({hostid})
           hostid = hostid[0].hostid;
-          const manualyClosableTriggers = await listAllClosableTriggers(hostName);
+          const manualyClosableTriggers = await listAllClosableTriggers(params);
+          console.log({manualyClosableTriggers:manualyClosableTriggers})
           const payload = {
             jsonrpc: "2.0",
             method: "problem.get",
@@ -69,7 +56,7 @@ exports.problemsController = {
               objectids: manualyClosableTriggers.map((triggerObj)=>triggerObj.triggerid),
               hostids: hostid
             },
-            auth: await getAuth(),
+            auth,
             id: 1
           };
           const response = await axios.post(
@@ -77,7 +64,6 @@ exports.problemsController = {
             payload
           );
           const problems = response.data.result;
-          // console.log({problems});
           const problemsToReturn = problems.map((problem) => {
             return {
               description: problem.name,
@@ -86,6 +72,8 @@ exports.problemsController = {
               creationTime: problem.clock
             }
           });
+
+          console.log(problemsToReturn);
           return {
             status: true,
             problems: problemsToReturn
@@ -102,12 +90,6 @@ exports.problemsController = {
       async closeProblem(eventid) {
         try {
           const auth = await getAuth();
-          //const hostName= _.get(params, 'host_name');
-          // const hostName= params.host_name;'Zabbix servers';
-          // const problems = await getAllProblemsByHostName('Zabbix server');
-          // const problemName = _.get(params, 'problem_name');
-          // const problemName = 'memory test trigger';
-          // const eventid = getProblemIdByName(problems, 'memory test trigger')
           const payload = {
             jsonrpc: "2.0",
             method: "event.acknowledge",

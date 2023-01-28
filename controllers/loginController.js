@@ -1,6 +1,5 @@
 const axios = require("axios");
 const Zabbix = require('zabbix-rpc');
-
 const z = new Zabbix(`${process.env.ZABBIX_SERVER_URL}/zabbix`);
 
 exports.loginController = {
