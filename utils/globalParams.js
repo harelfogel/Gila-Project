@@ -1,28 +1,39 @@
-const getCreateHostParams = (
+const { getHostIdByName } = require("./utils");
+
+const getCreateHostParams = ({
   auth,
-  hostname = "Test-TBD-5",
-  groupId = "2",
-  port = "10050"
-) => {
+  req,
+  port = "10050",
+}) => {
   try {
+    const body = req.body;
+    const groupid = req.body.host_groups
     const params = {
-      authToken: auth,
+      // authToken: auth,
       port: port,
-      hostName: hostname,
+      ip: body.params.host_ip,
+      hostName: body.params.host_name,
       groups: [
         {
-          groupid: groupId,
+          groupid: [groupid],
         },
       ],
     };
-    return params;
+    console.log({yovell:params})
+    return params
   } catch (err) {
     return err;
   }
 };
 
-const getDeleteHostParams = (auth, hostname = "Test-TBD-4", hostId = "2") => {
+const getDeleteHostParams = async (
+  auth,
+  hostname = "Test-TBD-10",
+  hostId = "2"
+) => {
   try {
+    hostId = await getHostIdByName("Test-TBD-10");
+    console.log(hostId);
     const params = {
       authToken: auth,
       hostName: hostname,
